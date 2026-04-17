@@ -62,6 +62,46 @@ Explain your design in plain language.
 
 ---
 
+## Song and UserProfile Features
+
+### `Song` Object
+
+| Field | Type | Range / Values | Role in System |
+|---|---|---|---|
+| `id` | `int` | 1–10 | Unique identifier — not used in scoring |
+| `title` | `str` | — | Display only |
+| `artist` | `str` | — | Display only |
+| `genre` | `str` | `pop`, `lofi`, `rock`, `ambient`, `jazz`, `synthwave`, `indie pop` | Categorical match vs. `favorite_genre` — weight 0.20 |
+| `mood` | `str` | `happy`, `chill`, `intense`, `relaxed`, `focused`, `moody` | Categorical match vs. `favorite_mood` — weight 0.30 |
+| `energy` | `float` | 0.0–1.0 | Squared distance vs. `target_energy` — weight 0.40 |
+| `tempo_bpm` | `float` | 60–152 BPM | Available — not in primary scoring formula (correlated with energy) |
+| `valence` | `float` | 0.0–1.0 | Tie-breaker in ranking |
+| `danceability` | `float` | 0.0–1.0 | Available — not in primary scoring formula |
+| `acousticness` | `float` | 0.0–1.0 | Boolean alignment vs. `likes_acoustic` — weight 0.10 |
+
+### `UserProfile` Object
+
+| Field | Type | Valid Values | Maps To |
+|---|---|---|---|
+| `favorite_genre` | `str` | any genre in catalog | `Song.genre` — weight 0.20 |
+| `favorite_mood` | `str` | any mood in catalog | `Song.mood` — weight 0.30 |
+| `target_energy` | `float` | 0.0–1.0 | `Song.energy` — weight 0.40 |
+| `likes_acoustic` | `bool` | `True` / `False` | `Song.acousticness` — weight 0.10 |
+
+### Active vs. Passive Features
+
+```
+ACTIVE in scoring               PASSIVE (stored, available for v2)
+────────────────────────────    ──────────────────────────────────
+Song.energy       → 0.40        Song.tempo_bpm     (correlated with energy)
+Song.mood         → 0.30        Song.danceability  (low discriminating power)
+Song.genre        → 0.20
+Song.acousticness → 0.10
+Song.valence      → tie-breaker
+```
+
+---
+
 ## Getting Started
 
 ### Setup
