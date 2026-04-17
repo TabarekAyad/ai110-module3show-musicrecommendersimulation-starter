@@ -62,6 +62,54 @@ Explain your design in plain language.
 
 ---
 
+### Algorithm Recipe
+
+**Step 1 — Load**
+Read `data/songs.csv` into a list of `Song` objects. Each row becomes one song with all 13 fields populated.
+
+**Step 2 — Score (runs once per song)**
+For each song, compute four independent point values and sum them:
+
+```
+genre_pts    = 2.0   if song.genre == user.favorite_genre
+             = 0.0   otherwise
+
+mood_pts     = 1.5   if song.mood == user.favorite_mood      (exact)
+             = 0.75  if song.mood in MOOD_NEIGHBORS[user.favorite_mood]  (adjacent)
+             = 0.0   otherwise
+
+energy_pts   = 2.0 × (1.0 − (song.energy − user.target_energy)²)
+
+acoustic_pts = 0.5 × song.acousticness        if user.likes_acoustic
+             = 0.5 × (1.0 − song.acousticness) otherwise
+
+score = genre_pts + mood_pts + energy_pts + acoustic_pts
+```
+
+Maximum possible score: **6.0**
+
+**Step 3 — Rank**
+Sort all scored songs by score descending. Tie-break by `valence` (higher valence wins). Return the top `k` songs (default `k=5`).
+
+**Step 4 — Explain**
+For each returned song, build a plain-language string naming which components contributed: genre match, mood match, energy proximity, acoustic alignment.
+
+---
+
+### Potential Biases
+
+- **Genre binary penalty** — a genre miss always scores 0.0 regardless of how close the genre is. Rock and pop are culturally adjacent; rock and classical are not. The system treats both misses identically, which can surface surprising results when energy happens to match.
+
+- **Single-mood profile** — a user who listens to both `intense` and `chill` music depending on context cannot be represented. The profile forces a single mood choice, which means context-switching listeners always get a compromised recommendation.
+
+- **Small catalog overfit** — with only 20 songs, some genres (`edm`, `classical`, `metal`) have exactly one representative. A user whose favorite genre is `edm` will get *Pulse Grid* as their top result no matter what — the system has no alternatives to offer even if the user's energy or mood preference doesn't match well.
+
+- **Energy dominates low-metadata songs** — songs that miss on genre and mood can still rank highly if their energy is close to the target. This means a well-placed mid-energy track can outrank a genre+mood match that sits at a slightly different energy level.
+
+- **Acousticness as a boolean** — `likes_acoustic=True` rewards all acoustic songs equally, whether they are 0.60 or 0.97 acoustic. This bluntness can over-reward songs the user might find too sparse or under-reward ones that are almost-but-not-quite acoustic.
+
+---
+
 ## Song and UserProfile Features
 
 ### `Song` Object
