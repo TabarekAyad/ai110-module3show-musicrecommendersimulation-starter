@@ -199,11 +199,19 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+Five adversarial profiles were run to stress-test the scoring logic:
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+![Edge cases terminal output](edge_cases.png)
+
+| Edge Case | What Was Tested | What It Revealed |
+|---|---|---|
+| Conflicting energy vs mood (`rock/sad/0.9`) | Can the system balance opposing signals? | Energy + genre (4.0 pts) reliably beats mood alone when energy gap is large — *Storm Runner* ranked #1 over actual sad songs |
+| Single-song genre (`metal/angry/0.95`) | What happens after the only matching song? | Large quality cliff — #1 scores 5.98, #2 drops to 3.23; mood neighbors fill the gap but at 3× lower scores |
+| Dead-center energy (`jazz/relaxed/0.5`) | Does a flat energy landscape destabilize ranking? | No — categorical signals (genre + mood) kept the ranking stable; *Coffee Shop Stories* won cleanly |
+| Acoustic + high energy contradiction (`folk/intense/0.9/acoustic`) | Can contradictory preferences be satisfied? | No — scores compressed between 3.5–3.8 with no clear winner; the system split between genre+acoustic and mood+energy |
+| No catalog match (`classical/angry/0.5`) | What happens when both genre AND mood miss? | Genre match (+2.0) outranked mood match (+1.5); results were technically correct but felt incoherent — *Iron Cathedral* (metal) appeared as #2 for a classical fan |
+
+**Key takeaway:** the scoring formula resolves preference conflicts predictably but not always intuitively. Energy + genre together (up to 4.0 pts) consistently outweigh mood alone (1.5 pts), which means context-based preferences can be overridden by audio feature proximity.
 
 ---
 
