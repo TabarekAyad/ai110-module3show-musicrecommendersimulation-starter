@@ -1,74 +1,72 @@
 # 🎧 Model Card: Music Recommender Simulation
 
-## 1. Model Name  
+## 1. Model Name
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**MoodTune 1.0**
 
----
-
-## 2. Intended Use  
-
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+A content-based music recommender that scores every song in a catalog against a user's stated taste profile and returns the five best matches with plain-language explanations for each.
 
 ---
 
-## 3. How the Model Works  
+## 2. Goal / Task
 
-Explain your scoring approach in simple language.  
+VibeFinder tries to answer one question: *given what a person tells me they like right now, which songs from the catalog would feel most right to them?*
 
-Prompts:  
+It does not predict behavior or learn from listening history. It takes four inputs — favorite genre, current mood, energy target, and whether you like acoustic music — and uses those to score every song. The top five scores become the recommendations.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+This system is built for classroom exploration. It is not intended for real users or production use.
 
 ---
 
-## 4. Data  
+## 3. Algorithm Summary
 
-Describe the dataset the model uses.  
+Think of it like a scorecard. For each song in the catalog, the system fills out four boxes:
 
-Prompts:  
+**Genre box** — Does this song match your favorite genre? If yes, it gets 2 points. If no, it gets 0. There is no in-between.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+**Mood box** — Does this song's mood match what you said you feel like? An exact match earns 1.5 points. A close neighbor mood (for example, "chill" is a neighbor of "focused") earns 0.75 points. A mismatch earns nothing.
 
----
+**Energy box** — How close is this song's energy level to your target? A perfect match earns 2 points. The further the song is from your target, the fewer points it gets. The penalty grows faster for bigger gaps — being a little off barely hurts, but being very far off costs a lot.
 
-## 5. Strengths  
+**Acoustic box** — If you said you like acoustic music, songs with higher acoustic character earn up to 0.5 points. If you said you don't, electronic-sounding songs earn those points instead.
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The four boxes are added together for a maximum possible score of 6.0. Every song gets scored, the scores are sorted from highest to lowest, and the top five are returned. If two songs tie, the happier-sounding one (higher valence) wins.
 
 ---
 
-## 6. Limitations and Bias 
+## 4. Data Used
 
-Where the system struggles or behaves unfairly. 
+The catalog contains **20 songs** stored in `data/songs.csv`. Each song has 13 fields: a title, an artist name, a genre label, a mood label, and nine numeric audio features (energy, tempo, valence, danceability, acousticness, instrumentalness, speechiness, and liveness).
 
-Prompts:  
+**Genres represented:** pop, lofi, rock, ambient, jazz, synthwave, indie pop, hip-hop, r&b, classical, folk, metal, edm, dream pop, indie folk, electronic — 16 genres total.
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+**Moods represented:** happy, chill, intense, relaxed, focused, moody, nostalgic, romantic, dreamy, sad, angry — 11 moods total.
+
+The catalog started with 10 songs and was expanded to 20 by adding songs that covered missing genres (metal, classical, hip-hop, folk, edm) and missing moods (sad, angry, dreamy, nostalgic, romantic).
+
+**Known gaps in the data:**
+- Distribution is uneven — lofi has 3 songs while most genres have only 1
+- No songs representing regional genres (reggae, cumbia, afrobeats, etc.)
+- All songs are fictional — values were assigned manually, not extracted from real audio
+- No lyric content, no language diversity, no songs from different eras
+
+---
+
+## 5. Strengths
+
+The system works well when a user's preferences are clearly defined and the catalog has enough songs in that space.
+
+**Clean profile + well-represented genre:** When a user asks for lofi, pop, rock, or folk — genres with at least two catalog entries — the top result is always the obvious match. *Focus Flow* for a focused lofi listener, *Storm Runner* for an intense rock fan, *Cabin Smoke* for a sad folk evening. The scoring formula puts the right song at #1 every time in these cases.
+
+**Energy as a reliable continuous signal:** The squared distance penalty for energy handles the full 0.0–1.0 range smoothly. A small gap (0.02) barely costs any points. A large gap (0.6+) costs a lot. This produces intuitive results — songs that are "close enough" on energy rank well, songs that are completely off do not.
+
+**Mood adjacency creates useful fallbacks:** When an exact mood match isn't available, the neighbor map pulls in the next-closest vibe. A rock fan who wants "intense" will naturally see "moody" songs in their lower slots. This feels more sensible than just leaving those positions to random energy matches.
+
+**Fully explainable output:** Every recommendation comes with a breakdown of exactly which components contributed and how many points each earned. There are no black-box decisions — you can trace every score back to a specific rule.
+
+---
+
+## 6. Limitations and Bias
 
 **1. Catalog genre imbalance ("lofi privilege").** The catalog has three lofi songs but only one each for metal, jazz, edm, and classical. A lofi user will always have their top three slots filled by exact genre matches, while a metal or edm user gets only one strong result before the system falls back on energy proximity to fill the rest. This is not a flaw in the scoring formula — it is a data problem — but the formula has no way to compensate for it, so some users consistently receive worse recommendations than others purely because of how the dataset was built.
 
@@ -90,7 +88,7 @@ Prompts:
 
 ---
 
-## 7. Evaluation  
+## 7. Evaluation
 
 Ten user profiles were run in total — five standard profiles covering common listening contexts, and five adversarial profiles designed to break the system in specific ways.
 
@@ -126,25 +124,35 @@ The most unexpected result came from the "No Catalog Match" profile (classical +
 
 ---
 
-## 8. Future Work  
+## 8. Intended Use and Non-Intended Use
 
-Ideas for how you would improve the model next.  
+**Intended use:**
+VibeFinder 1.0 is designed for classroom exploration. It is a teaching tool for understanding how content-based filtering works — how you turn song features and user preferences into a ranked list, and what happens when the data or the preferences create edge cases. It is appropriate for a single user choosing from a small, static catalog in a controlled setting.
 
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+**Not intended for:**
+- Real music services or production environments
+- Users who expect recommendations to improve over time — this system does not learn
+- Large catalogs — it scores every song on every request, which does not scale
+- Representing diverse global musical taste — the catalog reflects a narrow slice of Western popular genres
+- Making decisions with consequences — it should not be used to curate playlists for public broadcast, events, or commercial use
 
 ---
 
-## 9. Personal Reflection  
+## 9. Ideas for Improvement
 
-A few sentences about your experience.  
+**1. Add a genre adjacency map.**
+The mood scoring already gives partial credit for similar moods. Genre should do the same. A `GENRE_NEIGHBORS` map — where pop is adjacent to indie pop and synthwave, folk is adjacent to indie folk, rock is adjacent to metal — would let the system surface culturally close songs instead of treating every genre miss as an identical zero.
 
-Prompts:  
+**2. Inject diversity into the top-k results.**
+Right now, the same three lofi songs always appear in the same order for any lofi user, regardless of their specific energy or acoustic preferences. A simple diversity rule — such as "no more than two songs from the same genre in the top five," or "no two songs from the same artist" — would make the recommendations feel less like a fixed list and more like a genuine discovery.
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+**3. Support multiple context profiles per user.**
+A real listener is not one person — they are a gym person, a study person, a party person, and a late-night-drive person. Letting users save two or three named profiles (instead of one) and switching between them before a session would dramatically improve how well the system fits actual listening behavior, without requiring any changes to the scoring formula itself.
+
+---
+
+## 10. Personal Reflection
+
+Building this recommender changed how I think about what "smart" actually means in a recommendation system. Before this project, I assumed the algorithm was the hard part. After running the adversarial profiles, I realized the data distribution matters just as much — maybe more. The scoring formula is perfectly reasonable, but it still disadvantages metal and classical fans simply because there are fewer songs in those genres. The algorithm did not create that problem and cannot fix it on its own. That is a lesson that applies to any AI system: a well-designed model can still produce biased or unfair results if the data it was trained or evaluated on does not reflect the full range of users it is meant to serve.
+
+The most interesting discovery was how the system behaves when two preferences contradict each other. When someone wants sad music at high energy — a real combination, think post-breakup running playlist — the system does not say "I cannot satisfy this." It quietly picks a winner (energy and genre beat out mood), returns a confident-looking list, and gives no indication that anything was compromised. Real AI systems do this too. They produce outputs that look complete and authoritative even when the underlying request was impossible or ambiguous. That is worth understanding before trusting any recommendation blindly.
