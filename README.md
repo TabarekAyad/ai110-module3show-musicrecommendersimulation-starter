@@ -62,6 +62,18 @@ Explain your design in plain language.
 
 ---
 
+### Sample Output
+
+**Catalog loaded from `data/songs.csv`:**
+
+![Loaded songs](Loaded.png)
+
+**Top 5 recommendations for the pop/happy profile:**
+
+![Recommendations](Recommended.png)
+
+---
+
 ### Algorithm Recipe
 
 **Step 1 — Load**

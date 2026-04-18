@@ -9,14 +9,16 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from recommender import load_songs, recommend_songs
+from src.recommender import load_songs, recommend_songs
 
 
 def main() -> None:
-    songs = load_songs("../data/songs.csv")
-    print(f"Loaded {len(songs)} songs:")
+    songs = load_songs("data/songs.csv")
+    print(f"\n{'='*54}")
+    print(f"  Catalog: {len(songs)} songs loaded")
+    print(f"{'='*54}")
     for song in songs:
-        print(f"  {song['id']:>2}. {song['title']} — {song['artist']} ({song['genre']}, {song['mood']}, energy={song['energy']})")
+        print(f"  {song['id']:>2}. {song['title']:<28} [{song['genre']:<10}] [{song['mood']:<10}] energy={song['energy']:.2f}")
 
     # User taste profiles — swap the active one to test different recommendations
 
@@ -52,15 +54,27 @@ def main() -> None:
     #     "likes_acoustic": False,
     # }
 
+    print(f"\n{'='*54}")
+    print(f"  User Profile")
+    print(f"{'='*54}")
+    print(f"  Genre   : {user_prefs['genre']}")
+    print(f"  Mood    : {user_prefs['mood']}")
+    print(f"  Energy  : {user_prefs['target_energy']}")
+    print(f"  Acoustic: {'yes' if user_prefs['likes_acoustic'] else 'no'}")
+
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
-    print("\nTop recommendations:\n")
+    print(f"\n{'='*54}")
+    print(f"  Top {len(recommendations)} Recommendations")
+    print(f"{'='*54}\n")
     for i, (song, score, reasons) in enumerate(recommendations, 1):
-        print(f"#{i} {song['title']} by {song['artist']}")
-        print(f"    Score: {score:.3f} / 6.0")
-        print(f"    Because:")
+        filled = round(score / 6.0 * 20)
+        bar = f"[{'#' * filled}{'-' * (20 - filled)}]"
+        print(f"  #{i}  {song['title']} by {song['artist']}")
+        print(f"       Score : {score:.3f} / 6.0  {bar}")
+        print(f"       Why   :")
         for reason in reasons:
-            print(f"      - {reason}")
+            print(f"                - {reason}")
         print()
 
 
