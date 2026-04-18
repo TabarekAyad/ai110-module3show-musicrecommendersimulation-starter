@@ -3,10 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Song:
-    """
-    Represents a song and its attributes.
-    Required by tests/test_recommender.py
-    """
+    """A single song and its audio/metadata attributes loaded from songs.csv."""
     id: int
     title: str
     artist: str
@@ -23,10 +20,7 @@ class Song:
 
 @dataclass
 class UserProfile:
-    """
-    Represents a user's taste preferences.
-    Required by tests/test_recommender.py
-    """
+    """A user's taste preferences used to score and rank songs."""
     favorite_genre: str
     favorite_mood: str
     target_energy: float
@@ -47,11 +41,7 @@ MOOD_NEIGHBORS = {
 }
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
-    """
-    Scores a single song against a user preference dict.
-    Returns (total_score, reasons) where reasons explains each contribution.
-    Max possible score: 6.0
-    """
+    """Score one song against user preferences; return (score, reasons) with max 6.0."""
     score = 0.0
     reasons = []
 
@@ -85,26 +75,24 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
 
 class Recommender:
-    """
-    OOP implementation of the recommendation logic.
-    Required by tests/test_recommender.py
-    """
+    """OOP wrapper around the scoring and ranking logic for use in tests."""
+
     def __init__(self, songs: List[Song]):
+        """Store the song catalog for repeated recommendation calls."""
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+        """Return the top k songs ranked by score for the given user profile."""
         # TODO: Implement recommendation logic
         return self.songs[:k]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
+        """Return a plain-language string explaining why this song was recommended."""
         # TODO: Implement explanation logic
         return "Explanation placeholder"
 
 def load_songs(csv_path: str) -> List[Dict]:
-    """
-    Loads songs from a CSV file.
-    Required by src/main.py
-    """
+    """Read songs.csv and return a list of dicts with numeric fields cast to int/float."""
     import csv
 
     int_fields   = {"id", "tempo_bpm"}
@@ -124,10 +112,7 @@ def load_songs(csv_path: str) -> List[Dict]:
     return songs
 
 def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
-    """
-    Functional implementation of the recommendation logic.
-    Required by src/main.py
-    """
+    """Score all songs, sort by score descending, and return the top k as (song, score, reasons)."""
     scored = [
         (song, *score_song(user_prefs, song))
         for song in songs
